@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Free Invoice Generator — Create & Download PDF Invoices Instantly</title>
+<meta name="description" content="Free invoice generator for freelancers and small businesses. No signup, no account. Fill in your details and download a professional PDF invoice in seconds.">
+<meta name="keywords" content="free invoice generator, invoice maker, create invoice online, PDF invoice, freelance invoice template">
+<meta property="og:title" content="Free Invoice Generator — No Signup Required">
+<meta property="og:description" content="Create a professional PDF invoice in under a minute. Free, no account needed.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧾</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#f5f4f0; --card:#ffffff; --text:#1c1c1a; --sub:#6b6a64;
+  --border:#e2e0d8; --accent:#1d9e75; --accent-text:#04342c; --danger:#e24b4a;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#161613; --card:#211f1c; --text:#f1efe8; --sub:#a9a79f;
+    --border:#3a3833; --accent:#5dcaa5; --accent-text:#e1f5ee; --danger:#f09595;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#161613; --card:#211f1c; --text:#f1efe8; --sub:#a9a79f;
+  --border:#3a3833; --accent:#5dcaa5; --accent-text:#e1f5ee; --danger:#f09595;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:border-box;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:24px 16px 60px;}
+.wrap{max-width:640px;margin:0 auto;}
+h1{font-size:20px;font-weight:600;margin:0 0 4px;}
+p.lead{color:var(--sub);font-size:14px;margin:0 0 20px;}
+.card{background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;}
+.row{display:flex;gap:12px;flex-wrap:wrap;}
+.row > div{flex:1 1 200px;}
+label{display:block;font-size:12px;color:var(--sub);margin-bottom:4px;}
+input,textarea,select{width:100%;padding:11px 10px;border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);font-size:16px;font-family:inherit;}
+textarea{resize:vertical;min-height:44px;}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);}
+.req::after{content:" *";color:var(--danger);}
+.saved-hint{font-size:12px;color:var(--sub);text-align:center;margin-top:10px;min-height:16px;}
+.saved-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:0.5px solid var(--border);}
+.saved-row:last-child{border-bottom:none;}
+.saved-meta{font-size:13px;color:var(--text);}
+.saved-meta span{display:block;font-size:12px;color:var(--sub);}
+.saved-actions button{background:none;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--text);cursor:pointer;margin-left:6px;}
+.saved-actions .del{color:var(--danger);border-color:var(--danger);}
+h2{font-size:14px;font-weight:600;margin:0 0 12px;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;}
+.items{width:100%;border-collapse:collapse;}
+.items th{text-align:left;font-size:11px;color:var(--sub);font-weight:500;padding:0 6px 6px;}
+.items td{padding:4px 6px;vertical-align:top;}
+.items input{padding:7px 8px;font-size:13px;}
+.qty,.rate{width:70px;}
+.linetotal{width:80px;font-size:13px;padding-top:9px;text-align:right;}
+.rm{background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:10px;min-width:40px;min-height:40px;}
+.addrow{background:none;border:1px dashed var(--border);color:var(--sub);border-radius:8px;padding:12px;font-size:14px;cursor:pointer;margin-top:6px;width:100%;min-height:44px;}
+.addrow:hover{border-color:var(--accent);color:var(--accent);}
+.step{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accent-text);font-size:11px;font-weight:600;margin-right:8px;}
+.totals{margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.totals div{display:flex;justify-content:space-between;font-size:14px;padding:3px 0;}
+.totals .grand{font-size:18px;font-weight:600;margin-top:6px;}
+.gen{width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:var(--accent-text);font-size:15px;font-weight:600;cursor:pointer;margin-top:8px;}
+.gen:active{transform:scale(0.99);}
+.err{color:var(--danger);font-size:13px;margin-top:6px;display:none;}
+.foot{text-align:center;color:var(--sub);font-size:12px;margin-top:24px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Free invoice generator</h1>
+  <p class="lead">Create a professional PDF invoice in under a minute — no signup. Your draft is saved automatically on this device.</p>
+
+  <div class="card">
+    <h2><span class="step">1</span>From</h2>
+    <div class="row">
+      <div><label class="req">Your name / business</label><input id="fromName" placeholder="Alex Rivera Design"></div>
+      <div><label>Email</label><input id="fromEmail" type="email" placeholder="alex@example.com"></div>
+    </div>
+    <div style="margin-top:10px"><label>Address (optional)</label><textarea id="fromAddr" placeholder="123 Main St, Austin, TX"></textarea></div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">2</span>Bill to</h2>
+    <div class="row">
+      <div><label>Client name</label><input id="toName" placeholder="Acme Corp"></div>
+      <div><label>Client email</label><input id="toEmail" type="email" placeholder="billing@acme.com"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">3</span>Invoice details</h2>
+    <div class="row">
+      <div><label>Invoice number</label><input id="invNum" value="INV-001"></div>
+      <div><label>Currency</label>
+        <select id="currency">
+          <option value="$">USD ($)</option>
+          <option value="€">EUR (€)</option>
+          <option value="£">GBP (£)</option>
+          <option value="₹">INR (₹)</option>
+          <option value="C$">CAD (C$)</option>
+        </select>
+      </div>
+      <div><label>Date</label><input id="invDate" type="date"></div>
+      <div><label>Due date</label><input id="dueDate" type="date"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><span class="step">4</span>Line items</h2>
+    <table class="items" id="itemsTable">
+      <thead><tr><th>Description</th><th>Qty</th><th>Rate</th><th style="text-align:right">Amount</th><th></th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <button class="addrow" id="addRow" type="button">+ Add line item</button>
+
+    <div class="totals">
+      <div><span>Subtotal</span><span id="subtotalOut">$0.00</span></div>
+      <div><span>Tax</span><span><input id="taxPct" value="0" style="width:50px;display:inline-block;padding:4px 6px;font-size:13px;" >%</span></div>
+      <div class="grand"><span>Total</span><span id="totalOut">$0.00</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Notes (optional)</h2>
+    <textarea id="notes" placeholder="Thanks for your business! Payment due within 14 days."></textarea>
+  </div>
+
+  <div class="card" id="savedCard">
+    <h2><span class="step">5</span>Saved invoices</h2>
+    <div id="savedList" style="font-size:13px;color:var(--sub)">No saved invoices yet.</div>
+  </div>
+
+  <div class="card" id="upsellCard" style="display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+    <div style="font-size:13px;color:var(--sub)">Want a branding-free PDF? <span style="color:var(--text)">$3, one time.</span></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="https://buy.stripe.com/REPLACE_WITH_YOUR_LINK" target="_blank" rel="noopener" style="text-decoration:none">
+        <button type="button" class="addrow" style="width:auto;padding:9px 14px;margin:0">Remove branding — $3</button>
+      </a>
+      <button type="button" class="addrow" id="unlockBtn" style="width:auto;padding:9px 14px;margin:0">Have a code?</button>
+    </div>
+  </div>
+  <div class="card" id="unlockCard" style="display:none">
+    <label>Enter your unlock code</label>
+    <div style="display:flex;gap:8px">
+      <input id="unlockInput" placeholder="Paste the code from your receipt email">
+      <button type="button" class="gen" style="width:auto;margin:0;padding:11px 18px" id="unlockSubmit">Apply</button>
+    </div>
+    <div class="err" id="unlockErr" style="margin-top:8px">That code didn't match. Check your email and try again.</div>
+  </div>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="gen" id="saveBtn" type="button" style="flex:1 1 140px">Save invoice</button>
+    <button class="gen" id="genBtn" type="button" style="flex:1 1 140px">Download PDF</button>
+    <button class="gen" id="shareBtn" type="button" style="flex:1 1 140px">Share PDF</button>
+  </div>
+  <div class="err" id="errMsg">Add your name and at least one line item with a description first.</div>
+  <div class="saved-hint" id="savedHint"></div>
+
+  <p class="foot">Made with Quick Invoice — your info stays in this browser, nothing is uploaded</p>
+
+  <div class="card" style="margin-top:32px">
+    <h2 style="text-transform:none;letter-spacing:normal;font-size:16px;color:var(--text)">About this free invoice generator</h2>
+    <p style="font-size:14px;color:var(--sub);line-height:1.6">
+      Built for freelancers, contractors, and small businesses who need a clean invoice fast without
+      paying for invoicing software. Add your business details, list your line items, and download
+      a print-ready PDF invoice — no account, no email required, no watermark.
+    </p>
+    <h3 style="font-size:13px;margin:16px 0 4px">Is it really free?</h3>
+    <p style="font-size:13px;color:var(--sub);margin:0">Yes. Generate and download as many invoices as you like at no cost.</p>
+    <h3 style="font-size:13px;margin:16px 0 4px">Where is my data stored?</h3>
+    <p style="font-size:13px;color:var(--sub);margin:0">Only in your own browser's local storage. Nothing is sent to a server.</p>
+    <h3 style="font-size:13px;margin:16px 0 4px">Can I use this for multiple clients?</h3>
+    <p style="font-size:13px;color:var(--sub);margin:0">Yes — each invoice is generated fresh, so use it for as many clients and jobs as you need.</p>
+  </div>
+</div>
+
+<script>
+const tbody = document.querySelector('#itemsTable tbody');
+let rowCount = 0;
+
+function fmt(n){
+  const sym = document.getElementById('currency') ? document.getElementById('currency').value : '$';
+  return sym + (Math.round(n*100)/100).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+const UNLOCK_KEY = 'quick-invoice-unlocked';
+const VALID_CODE = 'QINV-2026-PRO'; // change this after setting up real fulfillment
+
+function isUnlocked(){
+  try{ return localStorage.getItem(UNLOCK_KEY) === '1'; }catch(e){ return false; }
+}
+
+function applyUnlockedUI(){
+  if(isUnlocked()){
+    document.getElementById('upsellCard').style.display = 'none';
+    document.getElementById('unlockCard').style.display = 'none';
+  }
+}
+applyUnlockedUI();
+
+document.getElementById('unlockBtn').addEventListener('click', ()=>{
+  const c = document.getElementById('unlockCard');
+  c.style.display = c.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('unlockSubmit').addEventListener('click', ()=>{
+  const val = document.getElementById('unlockInput').value.trim();
+  const errEl = document.getElementById('unlockErr');
+  if(val === VALID_CODE){
+    try{ localStorage.setItem(UNLOCK_KEY, '1'); }catch(e){}
+    errEl.style.display = 'none';
+    applyUnlockedUI();
+  } else {
+    errEl.style.display = 'block';
+  }
+});
+const fieldIds = ['fromName','fromEmail','fromAddr','toName','toEmail','invNum','currency','invDate','dueDate','taxPct','notes'];
+
+function saveDraft(){
+  try{
+    const data = {};
+    fieldIds.forEach(id=>{ const el=document.getElementById(id); if(el) data[id]=el.value; });
+    data.items = [...tbody.querySelectorAll('tr')].map(tr=>({
+      desc: tr.querySelector('.desc').value,
+      qty: tr.querySelector('.qty').value,
+      rate: tr.querySelector('.rate').value
+    }));
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+    const hint = document.getElementById('savedHint');
+    if(hint){ hint.textContent = 'Draft saved'; clearTimeout(window._hintTimer); window._hintTimer = setTimeout(()=>hint.textContent='', 1500); }
+  }catch(e){ /* storage unavailable, ignore */ }
+}
+
+function loadDraft(){
+  try{
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    fieldIds.forEach(id=>{ const el=document.getElementById(id); if(el && data[id]!==undefined) el.value = data[id]; });
+    if(Array.isArray(data.items) && data.items.length){
+      tbody.innerHTML = '';
+      data.items.forEach(it => addRow(it.desc, it.qty, it.rate));
+    }
+    return true;
+  }catch(e){ return false; }
+}
+
+function addRow(desc='', qty=1, rate=0){
+  rowCount++;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input class="desc" placeholder="Design work" value="${desc}"></td>
+    <td><input class="qty" type="number" min="0" step="1" value="${qty}"></td>
+    <td><input class="rate" type="number" min="0" step="0.01" value="${rate}"></td>
+    <td class="linetotal">$0.00</td>
+    <td><button class="rm" type="button" aria-label="Remove row">✕</button></td>`;
+  tbody.appendChild(tr);
+  tr.querySelector('.rm').addEventListener('click', ()=>{ tr.remove(); recalc(); });
+  tr.querySelectorAll('input').forEach(i => i.addEventListener('input', recalc));
+  recalc();
+}
+
+function recalc(){
+  let subtotal = 0;
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const qty = parseFloat(tr.querySelector('.qty').value) || 0;
+    const rate = parseFloat(tr.querySelector('.rate').value) || 0;
+    const lt = qty * rate;
+    tr.querySelector('.linetotal').textContent = fmt(lt);
+    subtotal += lt;
+  });
+  const taxPct = parseFloat(document.getElementById('taxPct').value) || 0;
+  const total = subtotal * (1 + taxPct/100);
+  document.getElementById('subtotalOut').textContent = fmt(subtotal);
+  document.getElementById('totalOut').textContent = fmt(total);
+}
+
+document.getElementById('addRow').addEventListener('click', ()=>{ addRow(); saveDraft(); });
+document.getElementById('taxPct').addEventListener('input', ()=>{ recalc(); saveDraft(); });
+document.getElementById('currency').addEventListener('change', ()=>{ recalc(); saveDraft(); });
+
+const hadDraft = loadDraft();
+if(!hadDraft){
+  addRow();
+  document.getElementById('invDate').value = new Date().toISOString().slice(0,10);
+}
+recalc();
+
+fieldIds.forEach(id=>{
+  const el = document.getElementById(id);
+  if(el) el.addEventListener('input', saveDraft);
+});
+tbody.addEventListener('input', saveDraft);
+
+function validForm(){
+  const fromName = document.getElementById('fromName').value.trim();
+  const rows = [...tbody.querySelectorAll('tr')].filter(tr => tr.querySelector('.desc').value.trim());
+  return fromName && rows.length > 0;
+}
+
+function buildInvoiceDoc(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:'pt', format:'a4'});
+  const left = 48; let y = 60;
+  const fromName = document.getElementById('fromName').value.trim();
+  const rows = [...tbody.querySelectorAll('tr')].filter(tr => tr.querySelector('.desc').value.trim());
+
+  doc.setFontSize(20); doc.text('INVOICE', left, y); y += 28;
+  doc.setFontSize(10); doc.setTextColor(100);
+  doc.text(document.getElementById('invNum').value || '', left, y); y += 14;
+  doc.text('Date: ' + (document.getElementById('invDate').value||''), left, y);
+  doc.text('Due: ' + (document.getElementById('dueDate').value||'—'), left+250, y); y += 26;
+
+  doc.setTextColor(20); doc.setFontSize(11);
+  doc.text('From', left, y); doc.text('Bill to', left+280, y); y += 14;
+  doc.setFontSize(10); doc.setTextColor(60);
+  const fromLines = [fromName, document.getElementById('fromEmail').value, document.getElementById('fromAddr').value].filter(Boolean);
+  const toLines = [document.getElementById('toName').value, document.getElementById('toEmail').value].filter(Boolean);
+  let yF = y, yT = y;
+  fromLines.forEach(l => { doc.text(l, left, yF); yF += 13; });
+  toLines.forEach(l => { doc.text(l, left+280, yT); yT += 13; });
+  y = Math.max(yF, yT) + 20;
+
+  doc.setDrawColor(220); doc.line(left, y, 547, y); y += 20;
+  doc.setFontSize(10); doc.setTextColor(20);
+  doc.text('Description', left, y);
+  doc.text('Qty', left+300, y);
+  doc.text('Rate', left+360, y);
+  doc.text('Amount', 547, y, {align:'right'});
+  y += 8; doc.setDrawColor(220); doc.line(left, y, 547, y); y += 16;
+
+  let subtotal = 0;
+  doc.setTextColor(60);
+  rows.forEach(tr=>{
+    const desc = tr.querySelector('.desc').value;
+    const qty = parseFloat(tr.querySelector('.qty').value)||0;
+    const rate = parseFloat(tr.querySelector('.rate').value)||0;
+    const lt = qty*rate; subtotal += lt;
+    doc.text(desc, left, y, {maxWidth:280});
+    doc.text(String(qty), left+300, y);
+    doc.text(fmt(rate), left+360, y);
+    doc.text(fmt(lt), 547, y, {align:'right'});
+    y += 18;
+  });
+
+  const taxPct = parseFloat(document.getElementById('taxPct').value)||0;
+  const total = subtotal * (1+taxPct/100);
+  y += 8; doc.setDrawColor(220); doc.line(left+300, y, 547, y); y += 16;
+  doc.text('Subtotal', left+360, y); doc.text(fmt(subtotal), 547, y, {align:'right'}); y += 16;
+  if(taxPct){ doc.text('Tax ('+taxPct+'%)', left+360, y); doc.text(fmt(total-subtotal), 547, y, {align:'right'}); y += 16; }
+  doc.setFontSize(12); doc.setTextColor(20);
+  doc.text('Total', left+360, y); doc.text(fmt(total), 547, y, {align:'right'}); y += 30;
+
+  const notes = document.getElementById('notes').value.trim();
+  if(notes){ doc.setFontSize(9); doc.setTextColor(100); doc.text(notes, left, y, {maxWidth:499}); y += 24; }
+
+  if(!isUnlocked()){
+    doc.setFontSize(8); doc.setTextColor(160);
+    doc.text('Created with Quick Invoice — quickinvoice.app', left, 780);
+  }
+  return { doc, total };
+}
+
+function flashHint(msg){
+  const hint = document.getElementById('savedHint');
+  hint.textContent = msg;
+  clearTimeout(window._hintTimer);
+  window._hintTimer = setTimeout(()=>hint.textContent='', 2500);
+}
+
+document.getElementById('genBtn').addEventListener('click', ()=>{
+  const errEl = document.getElementById('errMsg');
+  if(!validForm()){ errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  const { doc } = buildInvoiceDoc();
+  doc.save((document.getElementById('invNum').value || 'invoice') + '.pdf');
+  flashHint('PDF downloaded');
+});
+
+document.getElementById('shareBtn').addEventListener('click', async ()=>{
+  const errEl = document.getElementById('errMsg');
+  if(!validForm()){ errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  const { doc } = buildInvoiceDoc();
+  const fileName = (document.getElementById('invNum').value || 'invoice') + '.pdf';
+  const blob = doc.output('blob');
+  const file = new File([blob], fileName, {type:'application/pdf'});
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({files:[file], title:'Invoice', text:'Here is your invoice.'});
+      flashHint('Shared');
+      return;
+    }
+  }catch(e){ /* user cancelled or share failed, fall through */ }
+  doc.save(fileName);
+  flashHint('Sharing isn\'t supported here — downloaded instead');
+});
+
+// ---- Saved invoices ----
+const SAVED_KEY = 'quick-invoice-saved-v1';
+
+function getSavedList(){
+  try{ return JSON.parse(localStorage.getItem(SAVED_KEY) || '[]'); }catch(e){ return []; }
+}
+
+function setSavedList(list){
+  try{ localStorage.setItem(SAVED_KEY, JSON.stringify(list)); }catch(e){}
+}
+
+function snapshotForm(){
+  const data = {};
+  fieldIds.forEach(id=>{ const el=document.getElementById(id); if(el) data[id]=el.value; });
+  data.items = [...tbody.querySelectorAll('tr')].map(tr=>({
+    desc: tr.querySelector('.desc').value,
+    qty: tr.querySelector('.qty').value,
+    rate: tr.querySelector('.rate').value
+  }));
+  return data;
+}
+
+function applySnapshot(data){
+  fieldIds.forEach(id=>{ const el=document.getElementById(id); if(el && data[id]!==undefined) el.value = data[id]; });
+  tbody.innerHTML = '';
+  (data.items||[]).forEach(it => addRow(it.desc, it.qty, it.rate));
+  recalc();
+}
+
+function renderSavedList(){
+  const list = getSavedList();
+  const el = document.getElementById('savedList');
+  if(list.length === 0){ el.innerHTML = 'No saved invoices yet.'; return; }
+  el.innerHTML = '';
+  list.slice().reverse().forEach(entry=>{
+    const row = document.createElement('div');
+    row.className = 'saved-row';
+    row.innerHTML = `
+      <div class="saved-meta">${entry.invNum || 'Untitled'} — ${entry.toName || 'No client'}<span>${entry.date || ''} · ${entry.totalDisplay || ''}</span></div>
+      <div class="saved-actions"><button type="button" data-act="load">Load</button><button type="button" class="del" data-act="del">Delete</button></div>`;
+    row.querySelector('[data-act="load"]').addEventListener('click', ()=>{
+      applySnapshot(entry.data);
+      saveDraft();
+      flashHint('Invoice loaded');
+    });
+    row.querySelector('[data-act="del"]').addEventListener('click', ()=>{
+      setSavedList(getSavedList().filter(e => e.id !== entry.id));
+      renderSavedList();
+      flashHint('Invoice deleted');
+    });
+    el.appendChild(row);
+  });
+}
+
+document.getElementById('saveBtn').addEventListener('click', ()=>{
+  const errEl = document.getElementById('errMsg');
+  if(!validForm()){ errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  const { total } = buildInvoiceDoc();
+  const data = snapshotForm();
+  const entry = {
+    id: 'inv_' + Date.now(),
+    invNum: data.invNum,
+    toName: data.toName,
+    date: data.invDate,
+    totalDisplay: fmt(total),
+    data
+  };
+  const list = getSavedList();
+  list.push(entry);
+  setSavedList(list);
+  renderSavedList();
+  flashHint('Invoice saved');
+});
+
+renderSavedList();
+</script>
+</body>
+</html>
